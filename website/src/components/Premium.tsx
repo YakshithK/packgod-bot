@@ -27,13 +27,18 @@ const Premium = () => {
     window.open('https://your-payment-link.com', '_blank');
   };
 
+  const handleJoinWaitlist = () => {
+    // Replace with actual payment/premium URL
+    window.open('https://forms.gle/FnitiAzhBsuYSVd97', '_blank');
+  };
+
   return (
     <div className="py-20 px-4 bg-gradient-to-br from-gray-900 via-red-900/10 to-gray-900">
       <div className="max-w-4xl mx-auto text-center">
         <div className="mb-12">
           <Crown className="w-16 h-16 text-yellow-500 mx-auto mb-6 animate-bounce" />
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-            Go Premium 👑
+            Go Premium 👑 (Coming Soon)
           </h2>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
             Ready to take your roasting to the next level? Premium unlocks the most devastating features.
@@ -58,13 +63,18 @@ const Premium = () => {
               $4.99<span className="text-lg text-gray-400">/month</span>
             </div>
             <div className="text-gray-400 mb-6">Cancel anytime • No BS</div>
-            
             <Button 
+              onClick={handleJoinWaitlist}
+              className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-bold text-lg px-8 py-4 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200"
+            >
+              📃 Join Waitlist Now!
+            </Button>
+            {/* <Button 
               onClick={handleBuyPremium}
               className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black font-bold text-lg px-8 py-4 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200"
             >
               💳 Buy Premium
-            </Button>
+            </Button> */}
           </div>
         </Card>
 

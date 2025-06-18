@@ -72,7 +72,7 @@ const RoastStyles = () => {
 
         <div className="text-center mt-12">
           <p className="text-gray-400">
-            <span className="text-red-500 font-semibold">Pro tip:</span> Use <code className="bg-gray-800 px-2 py-1 rounded text-red-400">/roast @username [style]</code> to get started
+            Use <code className="bg-gray-800 px-2 py-1 rounded text-red-400">/roast @username [style]</code> to get started
           </p>
         </div>
       </div>

@@ -5,7 +5,7 @@ import { ExternalLink, Bot } from "lucide-react";
 const Hero = () => {
   const handleAddToDiscord = () => {
     // Replace with actual Discord bot invite URL
-    window.open('https://discord.com/api/oauth2/authorize?client_id=YOUR_BOT_ID&permissions=2048&scope=bot', '_blank');
+    window.open('https://discord.com/oauth2/authorize?client_id=1384658932160532713&scope=bot+applications.commands&permissions=274877975552', '_blank');
   };
 
   return (
@@ -46,7 +46,7 @@ const Hero = () => {
         </Button>
 
         {/* Stats */}
-        <div className="mt-16 grid grid-cols-3 gap-8 max-w-md mx-auto">
+        {/* <div className="mt-16 grid grid-cols-3 gap-8 max-w-md mx-auto">
           <div className="text-center">
             <div className="text-2xl font-bold text-red-500">50K+</div>
             <div className="text-sm text-gray-400">Servers</div>
@@ -59,7 +59,7 @@ const Hero = () => {
             <div className="text-2xl font-bold text-red-500">24/7</div>
             <div className="text-sm text-gray-400">Chaos</div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
