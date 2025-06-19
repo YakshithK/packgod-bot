@@ -319,10 +319,42 @@ async def info(interaction: discord.Interaction):
 @bot.tree.command(name="userinfo", description="View your profile and bot stats")
 async def info(interaction: discord.Interaction):
     
+    user = interaction.user
+    user_data = bot.get_user_data(user.id)
+
+    total_roasts = sum(bot.user_data["leaderboard"].values())
+    total_users = len(bot.user_data["users"])
+
+    user_roasts_given = user_data.get("roasts_given", 0)
+    user_roasts_received = user_data.get("roasts_receieved", 0)
+
     embed = discord.Embed(
-        title=""
+        title=f"📊 PackGod Info for {user.display_name}",
+        color=0x7289da
     )
 
+    embed.add_field(
+        name="👤 Your Stats",
+        value=(
+            f"**Premium**: {'✅ Yes' if user_data['premium'] else '❌ No'}\n"
+            f"**Roasts Given**: {user_roasts_given}\n"
+            f"**Roasts Received**: {user_roasts_received}\n"
+            f"**Favourite Style**: `{user_data.get('favourite_style', 'packgod')}`\n"
+            f"**Brutal Mode**: {'💀 On' if user_data.get("brutal_mode") else '😇 Off'}"
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="🌎 Bot Stats",
+        value=(
+            f"**Total Roasts**: {total_roasts}\n"
+            f"**Total Users**: {total_users}"
+        ),
+        inline=False
+    )
+
+    await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="roast", description="Roast another user!")
 async def roast_user(interaction: discord.Interaction, user: discord.Member, style: str = "packgod"):
