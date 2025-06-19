@@ -1,15 +1,13 @@
 {
   "users": {
     "676619678185029678": {
-      "premium": false,
-      "roasts_received": 11,
-      "roasts_given": 11,
+      "premium": true,
+      "roasts_received": 0,
+      "roasts_given": 0,
       "favorite_style": "packgod",
       "brutal_mode": false
     }
   },
   "roast_history": [],
-  "leaderboard": {
-    "676619678185029678": 11
-  }
+  "leaderboard": {}
 }
