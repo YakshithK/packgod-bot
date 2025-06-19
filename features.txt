@@ -5,6 +5,9 @@
     * [x] **Roast Cooldowns** – prevent spam by adding a cooldown per user.
     * [x] **Roast Image Uploads** – allow premium users to upload profile images for targeted visual roasts.
     * [x] **Better Error Handling** – send Discord-friendly error messages when OpenAI fails or Supabase is down.
+    * [] **Pagination** – for roast history, add paginations
+    * [x] **Should show username not uid** - for roast history
+    * [x] **Data should update dynamically** - for roast history
 
     #### 🔥 Premium Enhancements
 

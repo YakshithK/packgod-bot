@@ -5,10 +5,6 @@ import json
 import os
 from datetime import datetime, timedelta
 import asyncio
-from typing import Optional
-import base64
-import requests
-from io import BytesIO
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
@@ -74,6 +70,8 @@ class PackGodBot(commands.Bot):
                 "premium": True
             }
         }
+
+        self.bg_task = None
 
     def check_cooldown(self, user_id: int, command: str) -> tuple[bool, int]:
         """
@@ -272,6 +270,10 @@ class PackGodBot(commands.Bot):
             print(f"❌ Supabase update_stats error: {e}")
             return False  # Failed
 
+    async def setup_hook(self):
+        # Start the background task when the bot is ready
+        self.bg_task = asyncio.create_task(refresh_supabase_data(self))
+
 bot = PackGodBot()
 
 @bot.event
@@ -282,6 +284,45 @@ async def on_ready():
         print(f"Synced {len(synced)} command(s)")
     except Exception as e:
         print(f"Failed to sync commands: {e}")
+
+@bot.tree.command(name="info", description="Learn what PackGodBot is and how it works")
+async def info(interaction: discord.Interaction):
+    
+    embed = discord.Embed(
+        title="🤖 What is Packgod?",
+        description=(
+            "PackGodBot is a discord bot that **roasts users** in hilarious and creative styles like:\n"
+            "- 🔥Packgod\n"
+            "- 🧑‍🍳 Gordon Ramsay\n"
+            "- 💀 Gen Z\n"
+            "- 🎭 Shakespeare *(premium)*\n"
+            "- ⚡ Anime Villain *(premium)*\n"
+            "- 💥 UK Drill *(premium)*"
+        ),
+        color=0x7289da
+    )
+
+    embed.add_field(
+        name="💡 How It Works",
+        value="Use `/roast @user [style]` or `/roastme [style]` to get roasted. \n"
+        "Premium users unlock brutal mode, exclusive styles, and image roasts.",
+        inline=False
+    )
+
+    embed.add_field(
+        name="🚀 Add PackGod to your server!",
+        value="[Click here to invite](https://discord.com/oauth2/authorize?client_id=1384658932160532713&scope=bot+applications.commands&permissions=274877975552)"
+    )
+
+    await interaction.response.send_message(embed=embed)
+
+@bot.tree.command(name="userinfo", description="View your profile and bot stats")
+async def info(interaction: discord.Interaction):
+    
+    embed = discord.Embed(
+        title=""
+    )
+
 
 @bot.tree.command(name="roast", description="Roast another user!")
 async def roast_user(interaction: discord.Interaction, user: discord.Member, style: str = "packgod"):
@@ -557,8 +598,42 @@ async def show_leaderboard(interaction: discord.Interaction):
 
     await interaction.response.send_message(embed=embed)
 
-# @bot.tree.command(name="myroasts", description="View your roasting history")
-# async def myroasts():
+@bot.tree.command(name="myroasts", description="View your roasting history")
+async def myroasts(interaction: discord.Interaction):
+    history = bot.user_data["roast_history"]
+    
+    embed = discord.Embed(
+        title="⏳ View you recent roasts!",
+        description="Embarrasing!",
+        color=0x5865f2
+    )
+
+    user_cache = {}
+
+    for roast in history:
+        if roast["roaster_id"] == str(interaction.user.id):
+            target_id = roast["target_id"]
+            if target_id in user_cache:
+                target_user = user_cache[target_id]
+            else:
+                try:
+                    target_user = await bot.fetch_user(int(target_id))
+                except Exception:
+                    target_user = None
+                user_cache[target_id] = target_user
+
+            if target_user:
+                target_name = target_user.display_name
+            else:
+                target_name = f"User {target_id}"
+
+            embed.add_field(
+                name=target_name + ":",
+                value=roast["content"],
+                inline=False
+            )
+            
+    await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="premium", description="Upgrade to premium for brutal mode and exclusive styles")
 async def premium_info(interaction: discord.Interaction):
@@ -643,6 +718,12 @@ async def bot_status(interaction: discord.Interaction):
     
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
+async def refresh_supabase_data(bot_instance):
+    await bot_instance.wait_until_ready()
+    while not bot_instance.is_closed():
+        bot_instance.user_data = bot_instance.load_data()
+        await asyncio.sleep(60)
+
 if __name__ == "__main__":
     discord_token = os.getenv("DISCORD_TOKEN")
     if not discord_token:
@@ -654,4 +735,5 @@ if __name__ == "__main__":
         print("Error: OPENAPI_API_KEY environment variable not set.")
         exit(1)
 
+    # The background task is now started in setup_hook
     bot.run(discord_token)
