@@ -1,8 +1,22 @@
-# Welcome to your Lovable project
+# Welcome to your PackGod Bot project
 
-## Project info
+**URL**: https://your-deployment-url.com
 
-**URL**: https://lovable.dev/projects/a669ed8b-1143-4ab7-9c21-9cfdd371b8a6
+## Getting Started
+
+This project is for the PackGod Bot website. Clone the repo and follow the instructions to run locally or deploy.
+
+## Local Development
+
+Clone this repo and run the development server to start working on your project.
+
+## Deployment
+
+Deploy this project to your preferred hosting provider.
+
+## Custom Domain
+
+You can connect a custom domain to your deployed project. See your hosting provider's documentation for details.
 
 ## How can I edit this code?
 
