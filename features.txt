@@ -1,65 +1,89 @@
-### ✅ **DISCORD BOT – FEATURES & POLISH**
+Absolutely — here’s how you can **level up PackGodBot** from a novelty roaster to a full-on entertaining Discord companion that keeps users engaged, laughing, and coming back:
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+WHAT DO YOU WANT BY THE END OF THE SUMMER
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+WHAT DO YOU WANT BY THE END OF THE SUMMER
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+WHAT DO YOU WANT BY THE END OF THE SUMMER
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+WHAT DO YOU WANT BY THE END OF THE SUMMER
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+WHAT DO YOU WANT BY THE END OF THE SUMMER
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+WHAT DO YOU WANT BY THE END OF THE SUMMER
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
+IF STYLE IS NOT VALID, TELL THEM TO DO /STYLES
 
-    #### 🧠 Core Features
+---
 
-    * [x] **Roast Cooldowns** – prevent spam by adding a cooldown per user.
-    * [x] **Roast Image Uploads** – allow premium users to upload profile images for targeted visual roasts.
-    * [x] **Better Error Handling** – send Discord-friendly error messages when OpenAI fails or Supabase is down.
-    * [] **Pagination** – for roast history, add paginations
-    * [x] **Should show username not uid** - for roast history
-    * [x] **Data should update dynamically** - for roast history
+### 🔥 **Roast Add-Ons & Variations**
 
-    #### 🔥 Premium Enhancements
+| Command          | What it Does                                                                                       |
+| ---------------- | -------------------------------------------------------------------------------------------------- |
+| `/dailyroast`    | Roasts the user once per day with a fun quote or harsh line. Encourages daily engagement.          |
+| `/duel @user`    | A roast battle between two users — each gets roasted in turn and the server votes who lost harder. |
+| `/roastroulette` | Randomly picks someone in the voice/text channel to roast. Adds risk & surprise.                   |
+| `/randomstyle`   | Roasts a user using a **random style** (from free or premium). Great for replayability.            |
 
-    * [ ] **Brutal Mode Toggle via Slash Command** – already started, polish and test it fully.
-    * [ ] **Personal Roast History Viewer** – `/myroasts` to show past 5 roasts a user got.
-    * [ ] **Opt-out Feature** – let users opt out of being roasted (privacy-friendly).
+---
 
-    #### 📊 Analytics & Leaderboards
+### 🧠 **Game & Fun Commands**
 
-    * [ ] **Global Leaderboard** – `/toproasters` and `/topvictims`
-    * [ ] **Daily/Weekly Roasts** – for activity tracking or seasonal competitions.
+| Command              | What it Does                                                                             |
+| -------------------- | ---------------------------------------------------------------------------------------- |
+| `/insultgenerator`   | Gives a random, creative insult (no target). Good for memes or bios.                     |
+| `/compliment @user`  | Switch it up! Compliment users in a sarcastically sweet tone.                            |
+| `/truthordare @user` | Adds a party game. Optionally integrates roasting into dares.                            |
+| `/meme`              | Sends a random meme (or roast-style meme). Bonus: fetch memes from Reddit or a meme API. |
 
-    ---
+---
 
-### 🌐 **WEBAPP – FEATURES & UI**
+### 🏆 **Engagement/Leaderboards**
 
-    #### 👥 Onboarding
+| Command               | What it Does                                                                |
+| --------------------- | --------------------------------------------------------------------------- |
+| `/roasthistory @user` | Shows the past few roasts someone has received or given.                    |
+| `/roaststreak`        | Shows how many days in a row the user has been roasted or roasted others.   |
+| `/toproasters`        | Leaderboard of most **roasts given** instead of just received.              |
+| `/stylevote`          | Users vote on their favorite roast style. Helps you decide what to improve. |
 
-    * [x] **“Add to Server” Button** – done.
-    * [ ] **Login with Discord** – using OAuth to identify logged-in user.
-    * [ ] **Auto-Detect Server List** – after Discord login, show which servers the user can add the bot to.
+---
 
-    #### 💳 Premium Purchase Flow
+### 💎 **Premium-Only Fun**
 
-    * [ ] **Waitlist (Google Form)** – done.
-    * [ ] **Stripe Integration** – to accept payments (use test keys for now).
-    * [ ] **Webhook Listener** – to automatically grant premium in Supabase when a payment is confirmed.
-    * [ ] **Premium Dashboard** – show what styles they’ve unlocked, brutal mode status, roast count, etc.
+| Command               | What it Does                                                                                              |
+| --------------------- | --------------------------------------------------------------------------------------------------------- |
+| `/imagepack`          | Upload image & get roasted — but in **multiple styles** back to back.                                     |
+| `/roastscene`         | Roast someone like it’s a **movie trailer**, courtroom, or historical speech.                             |
+| `/voicepack`          | Use ElevenLabs or Bark to read roasts aloud with character voices (PackGod voice, British villain, etc.). |
+| `/customstyle create` | Premium users create & name their own roast styles. Stored in Supabase.                                   |
 
-    #### 📄 Informational Pages
+---
 
-    * [ ] **How It Works** – fun breakdown of how roasts are generated (explain GPT + Supabase).
-    * [ ] **FAQ Page** – “Can I roast mods?”, “Is this safe?”, etc.
-    * [ ] **Privacy & Terms** – important for payment + Discord API compliance.
+### 👨‍🔧 Utility Commands (To Make Bot Feel Alive)
 
-    ---
+| Command      | What it Does                                                      |
+| ------------ | ----------------------------------------------------------------- |
+| `/info`      | (You already added this) — show credits, links, etc.              |
+| `/support`   | Sends link to a Google Form, premium FAQ, or support server.      |
+| `/suggest`   | Let users submit roast style or feature ideas. Store in Supabase. |
+| `/bugreport` | Let users report bugs directly to you. Could auto-DM you.         |
 
-### 🧱 **INFRA / DEV OPS**
+---
 
-    * [ ] **Supabase Row Constraints** – prevent duplicate user entries.
-    * [ ] **Create a `.env.example`** – make onboarding or contributing easier for others.
-    * [ ] **Auto-Deploy from GitHub** – set up CI/CD from GitHub to Render or Railway.
-    * [ ] **Uptime Monitor** – use something like UptimeRobot or Cronitor.
-    * [ ] **Error Logger** – Sentry (or just save stack traces to Supabase for now).
-
-    ---
-
-### 🎯 **EXTRAS / ENGAGEMENT / GROWTH**
-
-    * [ ] **Discord Notifications** – a #roast-log channel where roast messages are auto-sent (if server opts in).
-    * [ ] **Custom Server Settings** – let admins toggle premium only, styles allowed, etc.
-    * [ ] **Invite Bonus** – if you bring 3 friends you get 1 month premium free.
-    * [ ] **Public Gallery** – webpage feed of best public roasts with votes (moderated).
-    * [ ] **Discord Bot Review Sites** – post your bot to top.gg, DiscordBots.org, etc.
-    * [ ] **Auto Message DM** – first roast ever triggers a DM like “You survived your first roast. Want premium?”
+Let me know if you want a [custom leaderboard UI for the webapp](f) or [roast voting/rating system](f)!

@@ -3,7 +3,7 @@ from discord.ext import commands
 import openai
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import asyncio
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -269,6 +269,35 @@ class PackGodBot(commands.Bot):
         except Exception as e:
             print(f"❌ Supabase update_stats error: {e}")
             return False  # Failed
+        
+    def is_daily_roast_available(self, user_id):
+        user_id = str(user_id)
+        response = supabase.table("daily_roasts").select("*").eq("user_id", user_id).single().execute()
+
+        today = date.today()
+
+        if response.data:
+            last_date = date.fromisoformat(response.data["last_roast"])
+            if last_date == today:
+                return False, response.data["streak"]
+            elif last_date == today - timedelta(days=1):
+                return True, response.data["streak"] + 1
+            else:
+                return True, 1
+        else:
+            return True, 1
+        
+    def update_daily_roast(self, user_id, streak):
+        user_id = str(user_id)
+        today = date.today().isoformat()
+
+        response = supabase.table("daily_roasts").upsert({
+            "user_id": user_id,
+            "last_roast": today,
+            "streak": streak
+        }, on_conflict="user_id").execute()
+
+        return response.status_code == 201 or response.status_code == 200
 
     async def setup_hook(self):
         # Start the background task when the bot is ready
@@ -285,6 +314,28 @@ async def on_ready():
     except Exception as e:
         print(f"Failed to sync commands: {e}")
 
+@bot.event
+async def on_guild_join(guild: discord.Guild):
+    for channel in guild.text_channels:
+        if channel.permissions_for(guild.me).send_messages:
+            try:
+                embed = discord.Embed(             
+                    title="🔥 PackGodBot has entered the server!",
+                    description=(
+                        "Yo! I'm **PackGodBot**, your roasting machine. "
+                        "Type `/roastme` or `roast @someone to unleash the flames.\n\n"
+                        "Use `/styles` to explore roast types, and `premium` to unlock **brutal mode** & more styles!"
+                    ),
+                    color=0xff4757
+                )
+                embed.set_footer(text="Run /info to learn more.")
+
+                await channel.send(embed=embed)
+                break
+            except Exception as e:
+                print(f"Failed to send join message in {guild.name}: {e}")
+            break
+        
 @bot.tree.command(name="info", description="Learn what PackGodBot is and how it works")
 async def info(interaction: discord.Interaction):
     
@@ -432,7 +483,6 @@ async def roast_user(interaction: discord.Interaction, user: discord.Member, sty
     if not stats_updated:
         print(f"⚠️ Could not save stats for roast from {interaction.user.id} to {user.id}")
 
-
 @bot.tree.command(name="roastme", description="Get Roasted!")
 async def roast_me(interaction: discord.Interaction, style: str = "packgod"):
     try:
@@ -504,7 +554,6 @@ async def roast_me(interaction: discord.Interaction, style: str = "packgod"):
     if not stats_updated:
         print(f"⚠️ Could not save stats for roast from {interaction.user.id} to {interaction.user.id}")
 
-
 @bot.tree.command(name="imageroast", description="Upload an image to get roasted based on it (Premium)")
 async def image_roast(interaction: discord.Interaction, image: discord.Attachment, style: str = "packgod"):
     await interaction.response.defer()
@@ -557,6 +606,96 @@ async def image_roast(interaction: discord.Interaction, image: discord.Attachmen
     # Optionally notify if stats couldn't be saved (only log, don't show to user)
     if not stats_updated:
         print(f"⚠️ Could not save stats for roast from {interaction.user.id} to {interaction.user.id}")
+
+@bot.tree.command(name="dailyroast", description="Get your daily roast!")
+async def daily_roast(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    available, streak = bot.is_daily_roast_available(user_id)
+
+    if not available:
+        await interaction.response.send_message("🔥 You've already been roasted today! Come back tomorrow.")
+        return
+
+    user_data = bot.get_user_data(user_id)
+    style=user_data.get("favorite_style", "packgod")
+
+    roast = await bot.generate_roast(
+        interaction.user,
+        interaction.user,
+        style,
+        brutal_mode=user_data.get("brutal_mode", False)
+    )
+
+    await interaction.response.send_message(
+        f"📅 **Daily Roast Streak: {streak}**\n 💀 {roast}"
+    )
+
+    bot.update_daily_roast(user_id, streak)
+
+    bot.update_stats(
+        target_id=user_id,
+        roaster_id=user_id,
+        style=style,
+        roast_text=roast
+    )
+
+@bot.tree.command(name="duel", description="Challenge another user to a roast battle.")
+async def duel(interaction: discord.Interaction, opponent: discord.Member):
+    challenger = interaction.user
+
+    if opponent.id == challenger.id:
+        await interaction.response.send_message("❌ You can't duel yourself!", ephemeral=True)
+        return
+    
+    if opponent.bot:
+        await interaction.response.send_message("🤖 I don't roast fellow bots!", ephemeral=True)
+        return
+    
+    await interaction.response.defer()
+
+    challenger_data = bot.get_user_data(challenger.id)
+    opponent_data = bot.get_user_data(opponent.id)
+
+    style="packgod"
+
+    roast1 = await bot.generate_roast(opponent, challenger, style, challenger_data.get("brutal_mode", False))
+    roast2 = await bot.generate_roast(challenger, opponent, style, opponent_data.get("brutal_mode", False))
+
+    embed = discord.Embed(
+        title="🔥 Roast Battle!",
+        description=f"**{challenger.mention}** vs **{opponent.mention}**\n\n"
+                    f"1️⃣ **{challenger.display_name}'s Roast:**\n{roast1}\n\n"
+                    f"2️⃣ **{opponent.display_name}'s Roast:**\n{roast2}\n\n"
+                    "Vote for the roast that was more skibidi! React Below.",
+        color=0xff4757
+    )
+
+    duel_msg = await interaction.followup.send(embed=embed)
+    await duel_msg.add_reaction("1️⃣")
+    await duel_msg.add_reaction("2️⃣")
+
+    duel_msg = await duel_msg.channel.fetch_message(duel_msg.id)
+
+    votes1 = discord.utils.get(duel_msg.reactions, emoji="1️⃣").count - 1
+    votes2 = discord.utils.get(duel_msg.reactions, emoji="2️⃣").count - 1
+
+    if votes1 > votes2:
+        loser = opponent
+    elif votes2 < votes1:
+        loser = challenger
+    else:
+        loser = None
+
+    result = f"🏆**{challenger.display_name}**: {votes1} votes\n💀 **{opponent.display_name}**: {votes2} votes"
+    if loser:
+        result += f"\n\n🔥 **{loser.display_name} got cooked.**"
+    else:
+        result += f"\n\n⚖️ It's a tie! Both took Ls equally."
+
+    await interaction.followup.send(result)
+
+    bot.update_stats(opponent.id, challenger.id, style, roast1)
+    bot.update_stats(challenger.id, opponent.id, style, roast2)
 
 @bot.tree.command(name="styles", description="View all available roast styles")
 async def show_styles(interaction: discord.Interaction):
