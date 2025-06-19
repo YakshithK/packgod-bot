@@ -3,7 +3,7 @@ from discord.ext import commands
 import openai
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import asyncio
 from typing import Optional
 import base64
@@ -28,6 +28,19 @@ class PackGodBot(commands.Bot):
         supabase: Client = create_client(url, key)
 
         self.user_data = self.load_data()
+
+        self.cooldowns = {}
+
+        self.cooldown_settings = {
+            "roast": {
+                "free": 30,
+                "premium": 15
+            },
+            "roastme": {
+                "free": 45,
+                "premium": 20
+            }
+        }
 
         self.roast_styles = {
             "packgod": {
@@ -62,6 +75,37 @@ class PackGodBot(commands.Bot):
             }
         }
 
+    def check_cooldown(self, user_id: int, command: str) -> tuple[bool, int]:
+        """
+        Check if a user is on cooldown for a specific command.
+        Returns (is_on_cooldown, remaining_seconds)
+        """
+        user_id_str = str(user_id)
+        user_data = self.get_user_data(user_data)
+
+        cooldown_time = self.cooldown_settings[command]["premium" if user_data["premium"] else "free"]
+
+        if user_id_str not in self.cooldowns:
+            self.cooldowns[user_id_str] = {}
+
+        if command in self.cooldowns[user_id_str]:
+            last_used = self.cooldowns[user_id_str][command]
+            time_since_last = (datetime.now() - last_used).total_seconds()
+
+            if time_since_last < cooldown_time:
+                remaining = int(cooldown_time - time_since_last)
+                return True, remaining
+            
+        return False, 0
+    
+    def update_cooldown(self, user_id: int, command: str):
+        """Update the cooldown timestamp for a user's command usage"""
+        user_id_str = str(user_id)
+        if user_id_str not in self.cooldowns:
+            self.cooldowns[user_id_str] = {}
+
+        self.cooldowns[user_id_str][command] = datetime.now()
+
     def load_data(self):
         try:
             users_response = supabase.table("users").select("*").execute()
@@ -92,6 +136,7 @@ class PackGodBot(commands.Bot):
                 for user in users_response.data
             }
 
+            print(f"✅ Successfully loaded {len(users)} users and {len(roast_history)} roasts from Supabase")
             return {
                 "users": users,
                 "roast_history": roast_history,
@@ -99,7 +144,9 @@ class PackGodBot(commands.Bot):
             }
         
         except Exception as e:
-            print(f"Error loading from Supabase: {e}")
+            print(f"❌ Error loading from Supabase: {e}")
+            print("🔄 Using fallback data - some features may be limited")
+            print("💡 Bot will continue to work, but stats won't be saved until Supabase is back online")
             return {
                 "users": {},
                 "roast_history": [],
@@ -125,11 +172,16 @@ class PackGodBot(commands.Bot):
     async def generate_roast(self, target_user, roaster_user, style="packgod", brutal_mode=False, image_url=None):
         style_info = self.roast_styles[style]
 
+        if image_url:
+            model = "gpt-4o"
+        else:
+            model = "gpt-3.5-turbo"
+
         base_prompt = f"""
         {style_info['prompt']}
 
         Target: {target_user.display_name}
-        Context: This is for a discord roasting bot. Be creative and be funny, but not genuninely harmful or offensive about protective characteristics.and
+        Context: This is for a discord roasting bot. Be creative and be funny, but not genuninely harmful or offensive about protective characteristics.
         """
 
         if brutal_mode: 
@@ -143,7 +195,7 @@ class PackGodBot(commands.Bot):
                 # Use vision model for image roasts
                 response = await asyncio.to_thread(
                     self.openai_client.chat.completions.create,
-                    model="gpt-3.5-turbo",
+                    model=model,
                     messages=[
                         {
                             "role": "user",
@@ -169,11 +221,25 @@ class PackGodBot(commands.Bot):
             if content is not None:
                 return content.strip()
             else:
-                return "(No response content)"
-            #return "you mama fat as shit"
+                return "🤖 My AI brain is having a moment. Try again in a few seconds!"
+        
+        except openai.RateLimitError:
+            return "🔥 Too many roasts! I'm taking a quick break. Try again in a minute!"
+        
+        except openai.APIError as e:
+            print(f"OpenAI API Error: {e}")
+            return "🤖 My roasting AI is having technical difficulties. Please try again later!"
+        
+        except openai.APITimeoutError:
+            return "⏰ The roast is taking too long to cook! Try again in a moment."
+        
+        except openai.AuthenticationError:
+            print("OpenAI Authentication Error - check API key")
+            return "🔑 My AI credentials are having issues. Contact an admin!"
         
         except Exception as e:
-            return f"Error parsing roast: {str(e)}"
+            print(f"Unexpected error in generate_roast: {e}")
+            return "💥 Something went wrong with my roasting skills! Try again later."
         
     def update_stats(self, target_id, roaster_id, style="packgod", roast_text=""):
         try:
@@ -200,8 +266,11 @@ class PackGodBot(commands.Bot):
                 "created_at": datetime.utcnow().isoformat()
             }).execute()
 
+            return True  # Success
+
         except Exception as e:
             print(f"❌ Supabase update_stats error: {e}")
+            return False  # Failed
 
 bot = PackGodBot()
 
@@ -243,6 +312,19 @@ async def roast_user(interaction: discord.Interaction, user: discord.Member, sty
         await interaction.followup.send(embed=embed)
         return
     
+    is_on_cooldown, remaining = bot.check_cooldown(interaction.user.id, "roast")
+    if is_on_cooldown:
+        user_data = bot.get_user_data(interaction.user.id)
+        cooldown_type = "premium" if user_data["premium"] else "free"
+        embed = discord.Embed(
+            title="⏰ Cooldown Active",
+            description=f"You're on cooldown! Wait **{remaining} seconds** before roasting again.\n\n💡 Premium users have shorter cooldowns!",
+            color=0xffa500
+        )
+        embed.set_footer(text=f"Cooldown: {bot.cooldown_settings['roast'][cooldown_type]}s for {cooldown_type} users")
+        await interaction.followup.send(embed=embed)
+        return
+    
     roast = await bot.generate_roast(
         user,
         interaction.user,
@@ -252,7 +334,7 @@ async def roast_user(interaction: discord.Interaction, user: discord.Member, sty
 
     embed = discord.Embed(
         title=f"{bot.roast_styles[style]['name']} Roast",
-        description=f"**{user.mention}** just got roasted **{interaction.user.mention}**!\n\ns💀 {roast}",
+        description=f"**{user.mention}** just got roasted by **{interaction.user.mention}**!\n\n💀 {roast}",
         color=0xff4757,
         timestamp=datetime.now()
     )
@@ -262,12 +344,20 @@ async def roast_user(interaction: discord.Interaction, user: discord.Member, sty
 
     await interaction.followup.send(embed=embed)
 
-    bot.update_stats(
+    # Update cooldown
+    bot.update_cooldown(interaction.user.id, "roast")
+
+    # Try to update stats, but don't fail if database is down
+    stats_updated = bot.update_stats(
         target_id=user.id,
         roaster_id=interaction.user.id,
         style=style,
         roast_text=roast
     )
+
+    # Optionally notify if stats couldn't be saved (only log, don't show to user)
+    if not stats_updated:
+        print(f"⚠️ Could not save stats for roast from {interaction.user.id} to {user.id}")
 
 
 @bot.tree.command(name="roastme", description="Get Roasted!")
@@ -290,6 +380,19 @@ async def roast_me(interaction: discord.Interaction, style: str = "packgod"):
         )
         await interaction.followup.send(embed=embed)
         return
+    
+    is_on_cooldown, remaining = bot.check_cooldown(interaction.user.id, "roast")
+    if is_on_cooldown:
+        user_data = bot.get_user_data(interaction.user.id)
+        cooldown_type = "premium" if user_data["premium"] else "free"
+        embed = discord.Embed(
+            title="⏰ Cooldown Active",
+            description=f"You're on cooldown! Wait **{remaining} seconds** before roasting again.\n\n💡 Premium users have shorter cooldowns!",
+            color=0xffa500
+        )
+        embed.set_footer(text=f"Cooldown: {bot.cooldown_settings['roast'][cooldown_type]}s for {cooldown_type} users")
+        await interaction.followup.send(embed=embed)
+        return
 
     roast = await bot.generate_roast(
         interaction.user,
@@ -310,15 +413,73 @@ async def roast_me(interaction: discord.Interaction, style: str = "packgod"):
 
     await interaction.followup.send(embed=embed)
 
-    bot.update_stats(
+    bot.update_cooldown(interaction.user.id, "roast")
+
+    # Try to update stats, but don't fail if database is down
+    stats_updated = bot.update_stats(
         target_id=interaction.user.id,
         roaster_id=interaction.user.id,
         style=style,
         roast_text=roast
     )
 
+    # Optionally notify if stats couldn't be saved (only log, don't show to user)
+    if not stats_updated:
+        print(f"⚠️ Could not save stats for roast from {interaction.user.id} to {interaction.user.id}")
 
-#@bot.tree.command(name="imageroast", description="Upload an image to get roasted based on it (Premium)")
+
+@bot.tree.command(name="imageroast", description="Upload an image to get roasted based on it (Premium)")
+async def image_roast(interaction: discord.Interaction, image: discord.Attachment, style: str = "packgod"):
+    await interaction.response.defer()
+
+    user_data = bot.get_user_data(interaction.user.id)
+    if not user_data['premium']:
+        embed = discord.Embed(
+            title= "🔒 Premium Feature",
+            description="Image roasting is a premium feature! Upgrade to get roasted based on your photos.",
+            color=0xff6b6b
+        )
+        await interaction.followup.send(embed=embed)
+        return
+    
+    if not any(image.filename.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.gif', '.webp']):
+        await interaction.followup.send("❌ Please upload a valid image file!")
+        return
+    
+    roast = await bot.generate_roast(
+        interaction.user,
+        interaction.user,
+        style,
+        user_data.get('brutal_mode', False),
+        image.url
+    )
+
+    embed = discord.Embed(
+        title=f"{bot.roast_styles[style]['name']} Image Roast",
+        description=f"**{interaction.user.mention}** shared a photo and got demolished!\n\n💀 {roast}",
+        color=0xff4757,
+        timestamp=datetime.now()
+    )
+    embed.set_image(url=image.url)
+
+    if user_data.get("brutal_mode", False):
+        embed.set_footer(text="⚠️ BRUTAL MODE ACTIVATED")
+
+    await interaction.followup.send(embed=embed)
+
+    bot.update_cooldown(interaction.user.id, "roast")
+
+    # Try to update stats, but don't fail if database is down
+    stats_updated = bot.update_stats(
+        target_id=interaction.user.id,
+        roaster_id=interaction.user.id,
+        style=style,
+        roast_text=roast
+    )
+
+    # Optionally notify if stats couldn't be saved (only log, don't show to user)
+    if not stats_updated:
+        print(f"⚠️ Could not save stats for roast from {interaction.user.id} to {interaction.user.id}")
 
 @bot.tree.command(name="styles", description="View all available roast styles")
 async def show_styles(interaction: discord.Interaction):
@@ -355,7 +516,12 @@ async def show_styles(interaction: discord.Interaction):
 @bot.tree.command(name="leaderboard", description="View the most roasted users")
 async def show_leaderboard(interaction: discord.Interaction):
     if not bot.user_data["leaderboard"]:
-        await interaction.response.send_message("📊 No roasts yet! Be the first to get demolished!")
+        embed = discord.Embed(
+            title="📊 No Roasts Yet!",
+            description="Be the first to get demolished! Start roasting with `/roast @user`",
+            color=0x95a5a6
+        )
+        await interaction.response.send_message(embed=embed)
         return
     
     sorted_board = sorted(bot.user_data['leaderboard'].items(), key=lambda x: x[1], reverse=True)[:10]
@@ -380,6 +546,10 @@ async def show_leaderboard(interaction: discord.Interaction):
             )
         except:
             continue
+
+    # Add note if data might be stale
+    if len(bot.user_data["leaderboard"]) == 0:
+        embed.set_footer(text="⚠️ Leaderboard data may be limited due to connection issues")
 
     await interaction.response.send_message(embed=embed)
 
@@ -431,6 +601,39 @@ async def toggle_brutal(interaction: discord.Interaction):
 
     status = "enabled" if user_data['brutal_mode'] else "disabled"
     await interaction.response.send_message(f"💀 Brutal mode {status}!", ephemeral=True)
+
+@bot.tree.command(name="botstatus", description="Check bot and service status (Admin only)")
+async def bot_status(interaction: discord.Interaction):
+    if not isinstance(interaction.user, discord.Member) or not interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message("❌ Admin only command!", ephemeral=True)
+        return
+
+    embed = discord.Embed(title="🤖 Bot Status", color=0x00ff00)
+    
+    # Check OpenAI
+    try:
+        test_response = await asyncio.to_thread(
+            bot.openai_client.chat.completions.create,
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": "test"}],
+            max_tokens=5
+        )
+        embed.add_field(name="OpenAI API", value="✅ Connected", inline=True)
+    except Exception as e:
+        embed.add_field(name="OpenAI API", value=f"❌ Error: {str(e)[:50]}...", inline=True)
+    
+    # Check Supabase
+    try:
+        test_query = supabase.table("users").select("id").limit(1).execute()
+        embed.add_field(name="Supabase", value="✅ Connected", inline=True)
+    except Exception as e:
+        embed.add_field(name="Supabase", value=f"❌ Error: {str(e)[:50]}...", inline=True)
+    
+    # Bot stats
+    embed.add_field(name="Loaded Users", value=f"{len(bot.user_data['users'])}", inline=True)
+    embed.add_field(name="Active Cooldowns", value=f"{len(bot.cooldowns)}", inline=True)
+    
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 if __name__ == "__main__":
     discord_token = os.getenv("DISCORD_TOKEN")

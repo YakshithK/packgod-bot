@@ -1,0 +1,62 @@
+### ✅ **DISCORD BOT – FEATURES & POLISH**
+
+    #### 🧠 Core Features
+
+    * [x] **Roast Cooldowns** – prevent spam by adding a cooldown per user.
+    * [x] **Roast Image Uploads** – allow premium users to upload profile images for targeted visual roasts.
+    * [x] **Better Error Handling** – send Discord-friendly error messages when OpenAI fails or Supabase is down.
+
+    #### 🔥 Premium Enhancements
+
+    * [ ] **Brutal Mode Toggle via Slash Command** – already started, polish and test it fully.
+    * [ ] **Personal Roast History Viewer** – `/myroasts` to show past 5 roasts a user got.
+    * [ ] **Opt-out Feature** – let users opt out of being roasted (privacy-friendly).
+
+    #### 📊 Analytics & Leaderboards
+
+    * [ ] **Global Leaderboard** – `/toproasters` and `/topvictims`
+    * [ ] **Daily/Weekly Roasts** – for activity tracking or seasonal competitions.
+
+    ---
+
+### 🌐 **WEBAPP – FEATURES & UI**
+
+    #### 👥 Onboarding
+
+    * [x] **“Add to Server” Button** – done.
+    * [ ] **Login with Discord** – using OAuth to identify logged-in user.
+    * [ ] **Auto-Detect Server List** – after Discord login, show which servers the user can add the bot to.
+
+    #### 💳 Premium Purchase Flow
+
+    * [ ] **Waitlist (Google Form)** – done.
+    * [ ] **Stripe Integration** – to accept payments (use test keys for now).
+    * [ ] **Webhook Listener** – to automatically grant premium in Supabase when a payment is confirmed.
+    * [ ] **Premium Dashboard** – show what styles they’ve unlocked, brutal mode status, roast count, etc.
+
+    #### 📄 Informational Pages
+
+    * [ ] **How It Works** – fun breakdown of how roasts are generated (explain GPT + Supabase).
+    * [ ] **FAQ Page** – “Can I roast mods?”, “Is this safe?”, etc.
+    * [ ] **Privacy & Terms** – important for payment + Discord API compliance.
+
+    ---
+
+### 🧱 **INFRA / DEV OPS**
+
+    * [ ] **Supabase Row Constraints** – prevent duplicate user entries.
+    * [ ] **Create a `.env.example`** – make onboarding or contributing easier for others.
+    * [ ] **Auto-Deploy from GitHub** – set up CI/CD from GitHub to Render or Railway.
+    * [ ] **Uptime Monitor** – use something like UptimeRobot or Cronitor.
+    * [ ] **Error Logger** – Sentry (or just save stack traces to Supabase for now).
+
+    ---
+
+### 🎯 **EXTRAS / ENGAGEMENT / GROWTH**
+
+    * [ ] **Discord Notifications** – a #roast-log channel where roast messages are auto-sent (if server opts in).
+    * [ ] **Custom Server Settings** – let admins toggle premium only, styles allowed, etc.
+    * [ ] **Invite Bonus** – if you bring 3 friends you get 1 month premium free.
+    * [ ] **Public Gallery** – webpage feed of best public roasts with votes (moderated).
+    * [ ] **Discord Bot Review Sites** – post your bot to top.gg, DiscordBots.org, etc.
+    * [ ] **Auto Message DM** – first roast ever triggers a DM like “You survived your first roast. Want premium?”
