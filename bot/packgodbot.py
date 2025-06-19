@@ -639,6 +639,18 @@ async def daily_roast(interaction: discord.Interaction):
         roast_text=roast
     )
 
+@bot.tree.command(name="roaststreak", description="View you daily roasting streak!")
+async def daily_roast(interaction: discord.Interaction):
+    _, streak = bot.is_daily_roast_available(interaction.user.id)
+
+    await interaction.response.send_message(
+        embed=discord.Embed(
+            title="📆 Daily Roast Streak",
+            description=f"🔥 You've kept the heat going for **{streak} day{'s' if streak != 1 else ''}** in a row!",
+            color=0xff5733
+        ).set_footer(text="Come back tomorrow to keep the streak alive!")
+    )
+
 @bot.tree.command(name="duel", description="Challenge another user to a roast battle.")
 async def duel(interaction: discord.Interaction, opponent: discord.Member):
     challenger = interaction.user
