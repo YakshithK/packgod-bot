@@ -246,7 +246,6 @@ class PackGodBot(commands.Bot):
             for uid in [target_id, roaster_id]:
                 exists = supabase.table("users").select("id").eq("id", uid).execute().data
                 if not exists:
-                    print('nope')
                     supabase.table("users").insert({
                         "id": str(uid),
                         "roasts_received": 0,
@@ -382,16 +381,16 @@ async def roast_me(interaction: discord.Interaction, style: str = "packgod"):
         await interaction.followup.send(embed=embed)
         return
     
-    is_on_cooldown, remaining = bot.check_cooldown(interaction.user.id, "roastme")
+    is_on_cooldown, remaining = bot.check_cooldown(interaction.user.id, "roast")
     if is_on_cooldown:
         user_data = bot.get_user_data(interaction.user.id)
         cooldown_type = "premium" if user_data["premium"] else "free"
         embed = discord.Embed(
             title="⏰ Cooldown Active",
-            description=f"You're on cooldown! Wait **{remaining} seconds** before roasting yourself again.\n\n💡 Premium users have shorter cooldowns!",
+            description=f"You're on cooldown! Wait **{remaining} seconds** before roasting again.\n\n💡 Premium users have shorter cooldowns!",
             color=0xffa500
         )
-        embed.set_footer(text=f"Cooldown: {bot.cooldown_settings['roastme'][cooldown_type]}s for {cooldown_type} users")
+        embed.set_footer(text=f"Cooldown: {bot.cooldown_settings['roast'][cooldown_type]}s for {cooldown_type} users")
         await interaction.followup.send(embed=embed)
         return
 
@@ -414,8 +413,7 @@ async def roast_me(interaction: discord.Interaction, style: str = "packgod"):
 
     await interaction.followup.send(embed=embed)
 
-    # Fix: Use "roastme" cooldown since this is a self-roast command
-    bot.update_cooldown(interaction.user.id, "roastme")
+    bot.update_cooldown(interaction.user.id, "roast")
 
     # Try to update stats, but don't fail if database is down
     stats_updated = bot.update_stats(
@@ -554,6 +552,9 @@ async def show_leaderboard(interaction: discord.Interaction):
         embed.set_footer(text="⚠️ Leaderboard data may be limited due to connection issues")
 
     await interaction.response.send_message(embed=embed)
+
+# @bot.tree.command(name="myroasts", description="View your roasting history")
+# async def myroasts():
 
 @bot.tree.command(name="premium", description="Upgrade to premium for brutal mode and exclusive styles")
 async def premium_info(interaction: discord.Interaction):
