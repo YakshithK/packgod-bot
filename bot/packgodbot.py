@@ -81,7 +81,7 @@ class PackGodBot(commands.Bot):
         Returns (is_on_cooldown, remaining_seconds)
         """
         user_id_str = str(user_id)
-        user_data = self.get_user_data(user_data)
+        user_data = self.get_user_data(user_id)
 
         cooldown_time = self.cooldown_settings[command]["premium" if user_data["premium"] else "free"]
 
@@ -362,7 +362,11 @@ async def roast_user(interaction: discord.Interaction, user: discord.Member, sty
 
 @bot.tree.command(name="roastme", description="Get Roasted!")
 async def roast_me(interaction: discord.Interaction, style: str = "packgod"):
-    await interaction.response.defer()
+    try:
+        await interaction.response.defer(thinking=True)
+    except discord.NotFound:
+        print(f"⚠️ Interaction expired or already acknowledged: {interaction.user}")
+        return
 
     if style not in bot.roast_styles:
         available_styles = ", ".join(bot.roast_styles.keys())

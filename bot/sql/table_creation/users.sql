@@ -1,5 +1,5 @@
 create table users (
-  id uuid primary key,
+  id text primary key,
   premium boolean default false,
   roasts_received integer default 0,
   roasts_given integer default 0,
