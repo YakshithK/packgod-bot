@@ -5,8 +5,11 @@ import json
 import os
 from datetime import datetime, timedelta, date
 import asyncio
+import random
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from tts import generate_voice
+from io import BytesIO
 
 load_dotenv()
 
@@ -272,16 +275,16 @@ class PackGodBot(commands.Bot):
         
     def is_daily_roast_available(self, user_id):
         user_id = str(user_id)
-        response = supabase.table("daily_roasts").select("*").eq("user_id", user_id).single().execute()
+        response = supabase.table("daily_roasts").select("*").eq("user_id", user_id).execute()
 
         today = date.today()
 
-        if response.data:
-            last_date = date.fromisoformat(response.data["last_roast"])
+        if response.data and len(response.data) > 0:
+            last_date = date.fromisoformat(response.data[0]["last_roast"])
             if last_date == today:
-                return False, response.data["streak"]
+                return False, response.data[0]["streak"]
             elif last_date == today - timedelta(days=1):
-                return True, response.data["streak"] + 1
+                return True, response.data[0]["streak"] + 1
             else:
                 return True, 1
         else:
@@ -709,6 +712,68 @@ async def duel(interaction: discord.Interaction, opponent: discord.Member):
     bot.update_stats(opponent.id, challenger.id, style, roast1)
     bot.update_stats(challenger.id, opponent.id, style, roast2)
 
+@bot.tree.command(name="voicepack", description="Get your roast read aloud in a character voice!")
+async def voicepack(interaction: discord.Interaction, user: discord.Member, style: str= "packgod"):
+    await interaction.response.defer()
+
+    user_data = bot.get_user_data(interaction.user.id)
+
+    if not user_data['premium']:
+        await interaction.followup.send("❌ Premium required for voicepack!")
+        return
+    
+    roast = await bot.generate_roast(user, interaction.user, style, user_data.get('brutal_mode', False))
+
+    audio_data = generate_voice(roast)
+    if not audio_data:
+        await interaction.followup.send("❌ Failed to generate voice.")
+        return
+    
+    audio_file = discord.File(BytesIO(audio_data), filename="roast.mp3")
+    await interaction.followup.send(
+        content=f"🔊 **{user.mention} just got voice packed! **\n 💀 {roast}",
+        file=audio_file
+    )
+
+@bot.tree.command(name="rankme", description="Get a cooked ranking of your personality")
+async def rank_me(interaction: discord.Interaction):
+    await interaction.response.defer()
+
+    categories = [
+        "Cornball",
+        "Menace",
+        "Clown",
+        "Unemployed",
+        "Sigma",
+        "Nonchalant",
+        "yn"
+    ]
+
+    chosen = random.sample(categories, 4)
+
+    percentages = []
+    remaining = 100
+    for i in range(len(chosen)-1):
+        val = random.randint(5, remaining - 5*(len(chosen)-i-1))
+        percentages.append(val)
+        remaining -= val
+    percentages.append(remaining)
+
+    rankings = [f"{percentages[i]}% {chosen[i]}" for i in range(len(chosen))]
+
+    random.shuffle(rankings)
+
+    message = ", ".join(rankings)
+
+    embed = discord.Embed(
+        title=f"📊 {interaction.user.display_name}'s Personality Ranking",
+        description=message,
+        color=0x1abc9c,
+        timestamp=datetime.now()
+    )
+
+    await interaction.followup.send(embed=embed)
+
 @bot.tree.command(name="styles", description="View all available roast styles")
 async def show_styles(interaction: discord.Interaction):
     user_data = bot.get_user_data(interaction.user.id)
@@ -820,25 +885,31 @@ async def myroasts(interaction: discord.Interaction):
 
 @bot.tree.command(name="premium", description="Upgrade to premium for brutal mode and exclusive styles")
 async def premium_info(interaction: discord.Interaction):
-    embed = discord.Embed(
-        title="⭐ PackGod Premium",
-        description="Unlock the full power of savage roasting!",
-        color=0xf1c40f
-    )
+    try:
+        await interaction.response.defer(thinking=False)
+        embed = discord.Embed(
+            title="⭐ PackGod Premium",
+            description="Unlock the full power of savage roasting!",
+            color=0xf1c40f
+        )
 
-    embed.add_field(
-        name="🔥 Premium Features",
-        value="• **Brutal Mode** - Absolutely devastating roasts\n• **Image Roasting** - Get roasted based on photos\n• **Exclusive Styles** - Shakespeare, Anime, UK Drill\n• **Priority Support** - Faster response times",
-        inline=False
-    )
+        embed.add_field(
+            name="🔥 Premium Features",
+            value="• **Brutal Mode** - Absolutely devastating roasts\n• **Image Roasting** - Get roasted based on photos\n• **Exclusive Styles** - Shakespeare, Anime, UK Drill\n• **Priority Support** - Faster response times",
+            inline=False
+        )
 
-    embed.add_field(
-        name="💰 Pricing",
-        value="$4.99/month or $49.99/year\n*Contact server admins for premium access*",
-        inline=False
-    )
+        embed.add_field(
+            name="💰 Pricing",
+            value="$4.99/month or $49.99/year\n*Contact server admins for premium access*",
+            inline=False
+        )
 
-    await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
+    except discord.NotFound:
+        print(f"[WARN] Tried to respond to an expired or unknown interaction: {interaction}")
+    except Exception as e:
+        print(f"[ERROR] Exception in /premium command: {e}")
 
 # Admin commands (for testing/setup)
 @bot.tree.command(name="givepremium", description="Give premium to a user (Admin only)")
